@@ -1,26 +1,26 @@
-import os
-import urllib.request
-from flask import Flask, request
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
-# СЮДА вставь публичную ссылку, которую тебе выдаст ngrok (например: "https://xxxx.ngrok-free.app/")
-CONTROL_URL = "https://ТВОЙ-NGROK-АДРЕС.ngrok-free.app/"
+# Временное хранилище состояния
+server_data = {
+    "triggered": False,
+    "source_code": "Сигнал еще не поступал."
+}
 
-@app.route('/', methods=['POST'])
+@app.route('/signal', methods=['POST'])
 def receive_signal():
-    source_code = request.form.get('source')
-    print(f"[Server.py] Получен исходник! Длина: {len(source_code) if source_code else 0} символов")
-    
-    # Сервер передает сигнал на твой компьютер через ngrok
-    try:
-        urllib.request.urlopen(CONTROL_URL, timeout=5)
-        print("[Server.py] Сигнал успешно передан на control.py!")
-    except Exception as e:
-        print(f"[Server.py] Не удалось передать сигнал на control.py: {e}")
-        
-    return "OK", 200
+    global server_data
+    data = request.json
+    if data and data.get("status") == "triggered":
+        server_data["triggered"] = True
+        server_data["source_code"] = data.get("source_code", "")
+        return jsonify({"status": "success"}), 200
+    return jsonify({"status": "ignored"}), 400
+
+@app.route('/status', methods=['GET'])
+def check_status():
+    return jsonify(server_data), 200
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5000)
