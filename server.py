@@ -1,26 +1,22 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
+import os
 
 app = Flask(__name__)
+UPLOAD_FOLDER = 'temp_screen.jpg'
 
-# Временное хранилище состояния
-server_data = {
-    "triggered": False,
-    "source_code": "Сигнал еще не поступал."
-}
-
-@app.route('/signal', methods=['POST'])
-def receive_signal():
-    global server_data
-    data = request.json
-    if data and data.get("status") == "triggered":
-        server_data["triggered"] = True
-        server_data["source_code"] = data.get("source_code", "")
+@app.route('/upload_screen', methods=['POST'])
+def upload_screen():
+    if 'file' in request.files:
+        file = request.files['file']
+        file.save(UPLOAD_FOLDER)
         return jsonify({"status": "success"}), 200
-    return jsonify({"status": "ignored"}), 400
+    return jsonify({"status": "error"}), 400
 
-@app.route('/status', methods=['GET'])
-def check_status():
-    return jsonify(server_data), 200
+@app.route('/get_screen', methods=['GET'])
+def get_screen():
+    if os.path.exists(UPLOAD_FOLDER):
+        return send_file(UPLOAD_FOLDER, mimetype='image/jpeg')
+    return "No image yet", 404
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
