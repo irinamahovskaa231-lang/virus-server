@@ -4,13 +4,15 @@ from flask import Flask, request
 
 app = Flask(__name__)
 
-# URL твоего control.py (если тестируешь локально, нужен ngrok-адрес для control.py)
+# Обрати внимание: если ты тестируешь control.py локально, Render не сможет 
+# напрямую постучаться на http://localhost:4000/. Для локального теста control.py 
+# нужен публичный адрес (например, через ngrok), либо сервер должен быть запущен локально.
 CONTROL_URL = "http://localhost:4000/"
 
 @app.route('/', methods=['POST'])
 def receive_signal():
     source_code = request.form.get('source')
-    print(f"[Server.py] Получен исходник от клиента! Длина кода: {len(source_code) if source_code else 0} символов")
+    print(f"[Server.py] Получен исходник! Длина кода: {len(source_code) if source_code else 0} символов")
     
     # Передаем сигнал дальше на control.py
     try:
